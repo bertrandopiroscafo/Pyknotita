@@ -8,4 +8,5 @@ Webographie
 [3] BlobDetection  [http://www.v3ga.net/processing/BlobDetection] est une bibliothèque de vision par ordinateur (Computer Vision Library) qui permet de trouver des taches (blob) dans une image.
 
 [4] The MidiBus [https://www.smallbutdigital.com/projects/themidibus] est une bibliothèque MIDI qui offre un moyen rapide et simple d'envoyer et de recevoir des données MIDI. Elle est conçue principalement pour les applications MIDI en temps réel.
+
 [5] ControlP5 [https://sojamo.de/libraries/controlP5] est une bibliothèque qui permet de construire des interfaces graphiques utilisateur.
