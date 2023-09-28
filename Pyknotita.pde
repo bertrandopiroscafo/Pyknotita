@@ -1,6 +1,6 @@
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@ Pyknótita V1.0 2023 by @bertrandopiroscafo   @
-//@ V1.0 18/09/2023                              @
+//@ V1.0.0 18/09/2023                            @
 //@ Code pushed to Github -> 28/09/2023          @
 //"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -8,6 +8,7 @@ import blobDetection.*;
 import controlP5.*;
 import themidibus.*;
 import processing.video.*;
+import milchreis.imageprocessing.*;
 import java.awt.Rectangle;
 import java.awt.Point;
 import processing.awt.PSurfaceAWT;
@@ -67,6 +68,7 @@ Rectangle _userArea;
 int _mode = 0;
 boolean _sendCC = true;
 boolean _sendNOTE = false;
+boolean _fx = false;
 
 PImage _imgDKBP;
 
@@ -97,7 +99,7 @@ void setup()
   frame = getJFrame();
   frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
  
-  surface.setTitle("Pyknótita V1.0 2023");
+  surface.setTitle("Pyknótita V1.0.0 2023");
   surface.setAlwaysOnTop(true);
   
   _controlP5 = new ControlP5(this);
@@ -132,6 +134,12 @@ void setup()
  .setValue(true)
  .setPosition(640 + 220,50)
  .setSize(10,10); 
+ 
+ _controlP5.addToggle("fx")
+ .setValue(false)
+ .setPosition(640 + 290,50)
+ .setSize(10,10); 
+ 
   _controlP5.addSlider("bbox max width")
  .setRange(1,WIDTH)
  .setValue(WIDTH)
@@ -214,7 +222,7 @@ void setup()
   // Capture initialization
   if (cameras.length == 1) {
     // webcam interne du mac
-    _cam = new Capture(this, CAM_WIDTH, CAM_HEIGHT, cameras[0], 25 /* FPS*/); // works with Catalina and Big Sur
+    _cam = new Capture(this, CAM_WIDTH, CAM_HEIGHT, cameras[0], 25/* FPS*/); // works with Catalina and Big Sur
   }
   else {
     // webcam externe
@@ -274,6 +282,12 @@ void draw()
     _cam.read();
     _img.copy(_cam, 0, 0, _cam.width, _cam.height, 
         0, 0, _img.width, _img.height);
+        
+    if (_fx == true)
+    {
+       _img = RetroConsole.applyGameboy(_img, 4);
+    }
+    
     image(_img, 0, 0, _cam.width, _cam.height);
     image(_imgDKBP, 660, 220, 380, 190);
     
@@ -368,6 +382,19 @@ void controlEvent(ControlEvent theEvent)
       _alwaysOnTop = false;
       surface.setAlwaysOnTop(false);
       println("[info] App is not always on top");
+    }
+  }
+  if (theEvent.getController().getName()=="fx") 
+  {
+    if (theEvent.getController().getValue() == 1.0)
+    {
+      _fx = true;
+      println("[info] FX is enabled");
+    }
+    else
+    {
+      _fx = false;
+      println("[info] FX is disabled");
     }
   }
   if (theEvent.getController().getName()=="bbox max width") 
