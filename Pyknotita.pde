@@ -655,6 +655,23 @@ void drawUserArea()
    {
      rect(_userArea.x, _userArea.y, _userArea.width, _userArea.height);
    }
+   else 
+   {
+     // si on sort du cadre, on repart sur la surface utilisateur initiale
+     // qui est maximale
+     _userArea.setLocation(0, 0);
+     _userArea.setSize(WIDTH - 2, HEIGHT - 2);
+   }
+}
+
+void keyPressed() {
+  if (key == 72) {
+    // H -> hide control panel
+    surface.setSize(640, 480);
+  } else if (key == 83) {
+    // S -> show control panel
+    surface.setSize(1240, 490);
+  }
 }
 
 // ==================================================
