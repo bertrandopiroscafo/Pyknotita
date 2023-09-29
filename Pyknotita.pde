@@ -99,7 +99,7 @@ void setup()
   frame = getJFrame();
   frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
  
-  surface.setTitle("Pyknótita V1.0.0 2023");
+  surface.setTitle("Pyknótita V1.1 2023");
   surface.setAlwaysOnTop(true);
   
   _controlP5 = new ControlP5(this);
@@ -139,6 +139,10 @@ void setup()
  .setValue(false)
  .setPosition(640 + 290,50)
  .setSize(10,10); 
+ 
+ _controlP5.addButton("shooting")
+ .setPosition(640 + 320,50)
+ .setSize(50,20); 
  
   _controlP5.addSlider("bbox max width")
  .setRange(1,WIDTH)
@@ -397,6 +401,24 @@ void controlEvent(ControlEvent theEvent)
       println("[info] FX is disabled");
     }
   }
+  if (theEvent.getController().getName()=="shooting") 
+  {
+    String s = String.valueOf(year())
+    +"_"
+    +String.valueOf(month())
+    +"_"
+    +String.valueOf(day())
+    +"_"
+    +String.valueOf(hour())
+    +"_"
+    +String.valueOf(minute())
+    +"_"
+    +String.valueOf(second())  
+    +".tif";
+    saveFrame("shooting/" + s);
+    println("[info] shooting " + s + " done");
+  }
+  
   if (theEvent.getController().getName()=="bbox max width") 
   {
     _bboxMaxWidth = theEvent.getController().getValue();
@@ -641,6 +663,10 @@ void mouseReleased() {
     _mode = 2;
     _sendCC = true;
     println("[info] User area resized: density is computed inside the blue rectangle");
+    if (_userArea.width < 2 && _userArea.height < 2) 
+    {
+      println("[warning] User area is very small: no detection may be occur");
+    }
   }
   
 }
