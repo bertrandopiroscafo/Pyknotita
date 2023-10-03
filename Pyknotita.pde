@@ -24,7 +24,7 @@ SOFTWARE.
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-//Pyknótita V1.1 2023 
+//Pyknótita V1.2 2023 
 //Bertrand GILLES-CHATELETS (@bertrandopiroscafo on IG)
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +124,7 @@ void setup()
   frame = getJFrame();
   frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
  
-  surface.setTitle("Pyknótita V1.1 2023");
+  surface.setTitle("Pyknótita V1.2 2023");
   surface.setAlwaysOnTop(true);
   
   _controlP5 = new ControlP5(this);
