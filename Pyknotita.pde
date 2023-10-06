@@ -1,26 +1,25 @@
-/*
-MIT License
+//MIT License
+//
+//Copyright (c) 2023 Bertrand GILLES-CHATELETS
+//
+//Permission is hereby granted, free of charge, to any person obtaining a copy
+//of this software and associated documentation files (the "Software"), to deal
+//in the Software without restriction, including without limitation the rights
+//to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//copies of the Software, and to permit persons to whom the Software is
+//furnished to do so, subject to the following conditions:
 
-Copyright (c) 2023 Bertrand GILLES-CHATELETS
+//The above copyright notice and this permission notice shall be included in all
+//copies or substantial portions of the Software.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//SOFTWARE.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -39,8 +38,11 @@ import java.awt.Point;
 import processing.awt.PSurfaceAWT;
 import javax.swing.JFrame;
 
-
+//-----------------------------------------------------
 // global variables
+//-----------------------------------------------------
+
+// Blob detection
 BlobDetection _theBlobDetection;
 int _blobMaxNb = 1000;
 int _blobLinesMaxNb = 4000;
@@ -52,12 +54,12 @@ boolean _streaming = true;
 int CAM_WIDTH  = 640;
 int CAM_HEIGHT = 480; 
 
+// Image
 PImage _img;
 int WIDTH  = 640;
 int HEIGHT = 480; 
 float _gain = 1;
 int _area = 0;
-
 float _previousArea = 0.0;
 float _bboxMaxWidth = WIDTH;
 float _bboxMaxHeight = HEIGHT;
@@ -67,6 +69,7 @@ int _counter = 0;
 float _thresholdValue = 0.592;
 float _triggerValue = 0.5;
 
+// GUI
 ControlP5 _controlP5;
 Slider _thresholdSlider;
 Slider _CC_Slider;
@@ -74,45 +77,64 @@ Slider _triggerSlider;
 Toggle _triggerToggle;
 Textarea _textArea;
 Println _console;
+boolean _drawEdges = true;
+boolean _drawBBOX = true;
+boolean _alwaysOnTop = true;
+Rectangle _userArea;
+int _mode = 0;
+boolean _fx = false;
+PImage _imgDKBP;
 
-MidiBus _myBus; // The MidiBus
+// The MidiBus
+MidiBus _myBus; 
 int CC_Value = 0;
 int CC_Value_old = 0;
 int CC_CHANNEL = 0;
 int CC_NUMBER_SEND = 71; 
 int CC_NUMBER_RECEIVE = 0;
 int NOTE_NUMBER = 48;
-boolean _newFrame=false;
-boolean _drawEdges = true;
-boolean _drawBBOX = true;
-boolean _alwaysOnTop = true;
-
-float _EMA_a = 0.5;
-
-Rectangle _userArea;
-int _mode = 0;
 boolean _sendCC = true;
 boolean _sendNOTE = false;
-boolean _fx = false;
 
-PImage _imgDKBP;
+// Filter
+float _EMA_a = 0.5;
 
+// Internal JAVA Frame
 JFrame frame;
-
-JFrame getJFrame() {
-  PSurfaceAWT surf = (PSurfaceAWT) getSurface();
-  PSurfaceAWT.SmoothCanvas canvas = (PSurfaceAWT.SmoothCanvas) surf.getNative();
-  return (JFrame) canvas.getFrame();
-}
 
 // ==================================================
 // setup()
 // ==================================================
 void setup()
-{
+{  
   // Size of applet
   size(1240, 490);
   
+  // Surface
+  initializeSurface();
+  
+  // MMI
+  buildMMI();
+  
+  // CAM
+  initializeCAM();
+ 
+  // Blob 
+  initializeBlobDetection();
+  
+  // MIDI
+  initializeMIDI();
+ 
+  // Bio
+  printIntro();
+}
+
+
+//==================================================
+// initializeSurface
+//==================================================
+void initializeSurface()
+{
   // background color
   background(color(128, 128, 128));
   
@@ -126,7 +148,13 @@ void setup()
  
   surface.setTitle("Pyknótita V1.2 2023");
   surface.setAlwaysOnTop(true);
-  
+}
+
+//==================================================
+// buildMMI
+//==================================================
+void buildMMI()
+{
   _controlP5 = new ControlP5(this);
   _thresholdSlider = _controlP5.addSlider("threshold")
  .setRange(0,100)
@@ -231,11 +259,18 @@ void setup()
                   
   _console = _controlP5.addConsole(_textArea);
   _console.play();
- 
+  
+  _img = new PImage(CAM_WIDTH - 2, CAM_HEIGHT - 2);  
+}
+
+//==================================================
+// initializeCAM
+//=================================================
+void initializeCAM()
+{
   // Capture 
   String[] cameras = Capture.list();  
-  
-  
+   
   if (cameras.length == 0) {
     println("There are no cameras available for capture.");
     exit();
@@ -246,8 +281,7 @@ void setup()
       println(cameras[i]);
     }
   }
-  
-  
+   
   // Capture initialization
   if (cameras.length == 1) {
     // webcam interne du mac
@@ -258,21 +292,22 @@ void setup()
     _cam = new Capture(this, CAM_WIDTH, CAM_HEIGHT, cameras[1], 25); // works with FPS = 25 with Catalina !!!
   }
   _cam.start();
-  
-  _img = new PImage(CAM_WIDTH - 2, CAM_HEIGHT - 2); 
-  
-  initializeBlobDetection();
-  
-  // MIDI
-  MidiBus.list(); 
-  //_myBus = new MidiBus(this, -1, "USB MIDI Interface"); // External
-  _myBus = new MidiBus(this, -1, "BGC DRUM KIT");
- 
-  // Bio
-  printIntro();
-
 }
 
+//===================================================
+// initializeMIDI
+//===================================================
+void initializeMIDI()
+{
+   MidiBus.list(); 
+  //_myBus = new MidiBus(this, -1, "USB MIDI Interface"); // External
+  _myBus = new MidiBus(this, -1, "BGC DRUM KIT");
+}
+
+
+//==================================================
+// printIntro
+//==================================================
 void printIntro()
 {
   //println(" "); plante l'appli !!!
@@ -282,12 +317,18 @@ void printIntro()
   //println("Have fun! :)");
 }
 
+//==================================================
+// printDKBPinfo
+//==================================================
 void printDKBPinfo()
 {
   println("[info] Die Kleinen Blauen Pferde - Franz Marc (1911) - Staatsgalerie Stuttgart ");
   
 }
 
+//==================================================
+// initializeBlobDetection
+//==================================================
 void initializeBlobDetection()
 {
   _theBlobDetection = new BlobDetection(_img.width, _img.height);
@@ -300,14 +341,12 @@ void initializeBlobDetection()
 
 
 // ==================================================
-// draw()
+// draw
 // ==================================================
 void draw()
-{  
-  
-  if (/*_newFrame == true*/_cam.available())
+{    
+  if (_cam.available())
   {
-    //_newFrame=false;
     _cam.read();
     _img.copy(_cam, 0, 0, _cam.width, _cam.height, 
         0, 0, _img.width, _img.height);
@@ -328,16 +367,9 @@ void draw()
     computeAndSendCC_Value(_area);
   }
 }
-/*
-void captureEvent(Capture cam)
-{
-  //cam.read();
-  //_newFrame = true;
-}
-*/
 
 // ===================================================
-// MMI
+// MMI Event Handler
 // ===================================================
 void controlEvent(ControlEvent theEvent) 
 {
@@ -471,8 +503,17 @@ void controlEvent(ControlEvent theEvent)
  }
 }
 
+//===================================================
+// Get the internal JFrame
+//===================================================
+JFrame getJFrame() {
+  PSurfaceAWT surf = (PSurfaceAWT) getSurface();
+  PSurfaceAWT.SmoothCanvas canvas = (PSurfaceAWT.SmoothCanvas) surf.getNative();
+  return (JFrame) canvas.getFrame();
+}
+
 // ==================================================
-// MIDI
+// MIDI management
 // ==================================================
 void computeAndSendCC_Value(int area)
 {
@@ -527,6 +568,9 @@ void computeAndSendCC_Value(int area)
   }
 }
 
+//============================================================
+// MIDI Event Handler
+//============================================================
 void controllerChange(int channel, int number, int value) {
 
   // Receive a controllerChange
@@ -549,7 +593,7 @@ void controllerChange(int channel, int number, int value) {
 }
 
 // ==================================================
-// drawBlobsAndEdges()
+// drawBlobsAndEdges
 // ==================================================
 void drawBlobsAndEdges(boolean drawBlobs, boolean drawEdges)
 {
@@ -621,6 +665,9 @@ void drawBlobsAndEdges(boolean drawBlobs, boolean drawEdges)
   
 }
 
+//======================================================
+// Blob filter
+//======================================================
 boolean check(Blob b)
 {
   boolean res = false;
@@ -650,6 +697,9 @@ float EMA(float v, float previousOutput) {
 
 // ==================================================
 // Mouse control
+// mousePressed() 
+// mouseDragged() 
+// mouseReleased() 
 // ===================================================
 void mousePressed() 
 {
@@ -696,6 +746,9 @@ void mouseReleased() {
   
 }
 
+//========================================================
+// drawUserArea
+//========================================================
 void drawUserArea()
 {
    strokeWeight(2);
@@ -715,6 +768,9 @@ void drawUserArea()
    }
 }
 
+//====================================================
+// Shortcuts
+//====================================================
 void keyPressed() {
   if (key == 72) {
     // H -> hide control panel
