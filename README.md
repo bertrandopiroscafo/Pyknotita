@@ -3,6 +3,7 @@ Pyknótita (densité en grec) est un détecteur de densité développé avec Pro
 Webographie
 
  [1] Processing  [https://processing.org]  est un langage et un environnement de développement utilisé les étudiants, les artistes, les designers, et les chercheurs pour l’apprentissage et le prototypage dans les arts visuels et la culture visuelle dans le domaine de la technologie
+ 
  [2] Video [https://processing.org/reference/libraries/video/index.html] est une bibliothèque qui lit les fichiers vidéo et capture les données vidéo d'une caméra. La vidéo peut être capturée à partir de caméras USB, de caméras IEEE 1394 (Firewire) ou de cartes vidéo avec des périphériques d'entrée composites ou S-vidéo connectés à l'ordinateur. Elle est basée sur le framework multimédia GStreamer et utilise les liaisons gstreamer-java pour interfacer GStreamer à partir de Java afin de prendre en charge un large éventail de formats multimédias. 
 
 [3] BlobDetection  [http://www.v3ga.net/processing/BlobDetection] est une bibliothèque de vision par ordinateur (Computer Vision Library) qui permet de trouver des taches (blob) dans une image.
