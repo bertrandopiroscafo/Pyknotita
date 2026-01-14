@@ -23,7 +23,10 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-//Pyknótita V1.2 2023 
+//Pyknótita 
+// V1.2 2023 
+// V1.3 2026
+// * gate -> trigger with CV.OCD
 //Bertrand GILLES-CHATELETS (@bertrandopiroscafo on IG)
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -90,9 +93,11 @@ MidiBus _myBus;
 int CC_Value = 0;
 int CC_Value_old = 0;
 int CC_CHANNEL = 0;
-int CC_NUMBER_SEND = 71; 
+int CC_NUMBER_CV_A = 50; //CV.OCD -> CV.A
+int CC_NUMBER_CV_B = 51; //CV.OCD -> CV.B
 int CC_NUMBER_RECEIVE = 0;
-int NOTE_NUMBER = 48;
+int NOTE_NUMBER_TRIGGER_1 = 48;    //CV.OCD -> Trigger #1
+int NOTE_NUMBER_TRIGGER_2 = 49;    //CV.OCD -> Trigger #2
 boolean _sendCC = true;
 boolean _sendNOTE = false;
 
@@ -143,10 +148,11 @@ void initializeSurface()
   
   // Sinon, quand on appuie sur le bouton close,
   // car ça plante en quittant quand on envoie les messages MIDI
+  // Pb remonté par TheMidiBus, Bug Processing 4 a priori
   frame = getJFrame();
   frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
  
-  surface.setTitle("Pyknótita V1.2 2023");
+  surface.setTitle("Pyknótita V1.3 @bertrandopiroscafo");
   surface.setAlwaysOnTop(true);
 }
 
@@ -232,21 +238,21 @@ void buildMMI()
  .setValue(0)
  .setPosition(650,165)
  .setSize(500,20)
- .setColorForeground(color(255, 0, 0))
+ .setColorForeground(color(0, 255, 0))
  .lock();
  
- _triggerSlider = _controlP5.addSlider("gate")
+ _triggerSlider = _controlP5.addSlider("Trigger Threshold")
  .setRange(0, 127)
  .setValue(127)
  .setPosition(650,195)
  .setSize(500,10);
  
- _triggerToggle = _controlP5.addToggle("triggerToggle")
+ /*_triggerToggle = _controlP5.addToggle("triggerToggle")
  .setValue(false)
  .setPosition(640 + 570,195)
  .setSize(20,20); 
  //_triggerToggle.setMode(ControlP5.SWITCH);
- _triggerToggle.getCaptionLabel().setVisible(false);
+ _triggerToggle.getCaptionLabel().setVisible(false);*/
  
  _textArea = _controlP5.addTextarea("txt")
                   .setPosition(650, 420)
@@ -283,6 +289,7 @@ void initializeCAM()
   }
    
   // Capture initialization
+  //_cam = new Capture(this, "pipeline:autovideosrc");
   if (cameras.length == 1) {
     // webcam interne du mac
     _cam = new Capture(this, CAM_WIDTH, CAM_HEIGHT, cameras[0], 25/* FPS*/); // works with Catalina and Big Sur
@@ -292,6 +299,7 @@ void initializeCAM()
     _cam = new Capture(this, CAM_WIDTH, CAM_HEIGHT, cameras[1], 25); // works with FPS = 25 with Catalina !!!
   }
   _cam.start();
+  println("CAM -> width = "+_cam.width+" height = "+_cam.height+" FPS = "+_cam.frameRate);
 }
 
 //===================================================
@@ -365,6 +373,7 @@ void draw()
     drawBlobsAndEdges(_drawBBOX,_drawEdges);
     drawUserArea();
     computeAndSendCC_Value(_area);
+    surface.setTitle("Pyknótita V1.3 @bertrandopiroscafo - FPS: " + Math.round(frameRate));
   }
 }
 
@@ -496,7 +505,7 @@ void controlEvent(ControlEvent theEvent)
   {
     _EMA_a = theEvent.getController().getValue();
   }
-  if (theEvent.getController().getName()=="gate") 
+  if (theEvent.getController().getName()=="Trigger Threshold") 
   {
     _triggerValue = theEvent.getController().getValue();
   }
@@ -539,17 +548,18 @@ void computeAndSendCC_Value(int area)
     //println("] CC Value = ", CC_Value);
     _CC_Slider.setValue(CC_Value);
     if (_myBus != null) {
-      _myBus.sendControllerChange(CC_CHANNEL, CC_NUMBER_SEND, CC_Value);
+      _myBus.sendControllerChange(CC_CHANNEL, CC_NUMBER_CV_A, CC_Value);
+      _myBus.sendControllerChange(CC_CHANNEL, CC_NUMBER_CV_B, 127 - CC_Value);
     }
     if (CC_Value >= _triggerValue && _sendNOTE == false)
     {
       // NOTE ON
-      println("[info] Gate is ON");
-      _triggerToggle.setValue(true);
+      println("[info] Trigger #1 : "+millis());
+      //_triggerToggle.setValue(true);
       if (_myBus != null) {
-        _myBus.sendNoteOn(CC_CHANNEL, NOTE_NUMBER, CC_Value);
+        _myBus.sendNoteOn(CC_CHANNEL, NOTE_NUMBER_TRIGGER_1, CC_Value);
+        _CC_Slider.setColorForeground(color(255, 0, 0));
       }
-      //_sample.play();
       _sendNOTE = true;
     }
     else
@@ -557,10 +567,11 @@ void computeAndSendCC_Value(int area)
       // NOTE OFF
       if (CC_Value < _triggerValue && _sendNOTE == true)
       {
-        println("[info] Gate is OFF");
-        _triggerToggle.setValue(false);
+        println("[info] Trigger #2 : "+millis());
+        //_triggerToggle.setValue(false);
         if (_myBus != null) {
-          _myBus.sendNoteOff(CC_CHANNEL, NOTE_NUMBER, CC_Value);
+          _myBus.sendNoteOn(CC_CHANNEL, NOTE_NUMBER_TRIGGER_2, CC_Value);
+          _CC_Slider.setColorForeground(color(0, 255, 0));
         }
         _sendNOTE = false;
       }
