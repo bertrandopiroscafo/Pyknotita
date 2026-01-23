@@ -1,6 +1,7 @@
 //MIT License
 //
-//Copyright (c) 2023 Bertrand GILLES-CHATELETS
+//Copyright (c) 2023-2026 Bertrand GILLES-CHATELETS
+//                        @bertrandopiroscafo
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -40,6 +41,8 @@ import java.awt.Rectangle;
 import java.awt.Point;
 import processing.awt.PSurfaceAWT;
 import javax.swing.JFrame;
+import oscP5.*;
+import netP5.*;
 
 //-----------------------------------------------------
 // global variables
@@ -89,7 +92,7 @@ boolean _fx = false;
 PImage _imgDKBP;
 
 // The MidiBus
-MidiBus _myBus; 
+MidiBus _myBus = null; 
 int CC_Value = 0;
 int CC_Value_old = 0;
 int CC_CHANNEL = 0;
@@ -100,6 +103,11 @@ int NOTE_NUMBER_TRIGGER_1 = 48;    //CV.OCD -> Trigger #1
 int NOTE_NUMBER_TRIGGER_2 = 49;    //CV.OCD -> Trigger #2
 boolean _sendCC = true;
 boolean _sendNOTE = false;
+
+// OSC
+OscP5 _oscP5;
+NetAddress _myRemoteLocation;
+
 
 // Filter
 float _EMA_a = 0.5;
@@ -129,6 +137,9 @@ void setup()
   
   // MIDI
   initializeMIDI();
+  
+  // OSC
+  initializeOSC();
  
   // Bio
   printIntro();
@@ -307,11 +318,27 @@ void initializeCAM()
 //===================================================
 void initializeMIDI()
 {
-   MidiBus.list(); 
-  //_myBus = new MidiBus(this, -1, "USB MIDI Interface"); // External
-  _myBus = new MidiBus(this, -1, "BGC DRUM KIT");
+  MidiBus.list(); 
+  //_myBus = new MidiBus(this, -1, "USB MIDI Interface"); // external port for mac and WIN
+  _myBus = new MidiBus(this, -1, 2); // external port for linux
+  //_myBus = new MidiBus(this, -1, "BGC DRUM KIT"); // internal port for mac
 }
 
+//==================================================
+// initializeOSC
+//==================================================
+void initializeOSC()
+{
+  /* start oscP5, listening for incoming messages at port 12000 */
+  _oscP5 = new OscP5(this, 14000);
+  
+  /* myRemoteLocation is a NetAddress. a NetAddress takes 2 parameters,
+   * an ip address and a port number. myRemoteLocation is used as parameter in
+   * oscP5.send() when sending osc packets to another computer, device, 
+   * application. 
+   */
+  _myRemoteLocation = new NetAddress("192.168.1.55", 17000); 
+}
 
 //==================================================
 // printIntro
@@ -559,6 +586,7 @@ void computeAndSendCC_Value(int area)
       if (_myBus != null) {
         _myBus.sendNoteOn(CC_CHANNEL, NOTE_NUMBER_TRIGGER_1, CC_Value);
         _CC_Slider.setColorForeground(color(255, 0, 0));
+        sendOSCTrigger(1);
       }
       _sendNOTE = true;
     }
@@ -572,6 +600,7 @@ void computeAndSendCC_Value(int area)
         if (_myBus != null) {
           _myBus.sendNoteOn(CC_CHANNEL, NOTE_NUMBER_TRIGGER_2, CC_Value);
           _CC_Slider.setColorForeground(color(0, 255, 0));
+          sendOSCTrigger(2);
         }
         _sendNOTE = false;
       }
@@ -601,6 +630,27 @@ void controllerChange(int channel, int number, int value) {
       _thresholdSlider.setValue(_thresholdValue);
     }
   }
+}
+
+// ==================================================
+// OSC management
+// ==================================================
+void sendOSCTrigger(int triggerNumber)  {
+ 
+  OscMessage myMessage = new OscMessage("/trigger");
+ 
+  myMessage.add(triggerNumber); 
+  
+  _oscP5.send(myMessage, _myRemoteLocation);
+  
+}
+
+/* incoming osc message are forwarded to the oscEvent method. */
+void oscEvent(OscMessage theOscMessage) {
+  /* print the address pattern and the typetag of the received OscMessage */
+  print("### received an osc message.");
+  print(" addrpattern: "+theOscMessage.addrPattern());
+  println(" typetag: "+theOscMessage.typetag());
 }
 
 // ==================================================
