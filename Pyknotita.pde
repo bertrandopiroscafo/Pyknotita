@@ -329,15 +329,15 @@ void initializeMIDI()
 //==================================================
 void initializeOSC()
 {
-  /* start oscP5, listening for incoming messages at port 12000 */
-  _oscP5 = new OscP5(this, 14000);
+  /* start oscP5, listening for incoming messages */
+  _oscP5 = new OscP5(this, 8000);
   
   /* myRemoteLocation is a NetAddress. a NetAddress takes 2 parameters,
    * an ip address and a port number. myRemoteLocation is used as parameter in
    * oscP5.send() when sending osc packets to another computer, device, 
    * application. 
    */
-  _myRemoteLocation = new NetAddress("192.168.1.55", 17000); 
+  _myRemoteLocation = new NetAddress("192.168.1.55"/* mon iPhone */, 7000); 
 }
 
 //==================================================
@@ -577,6 +577,7 @@ void computeAndSendCC_Value(int area)
     if (_myBus != null) {
       _myBus.sendControllerChange(CC_CHANNEL, CC_NUMBER_CV_A, CC_Value);
       _myBus.sendControllerChange(CC_CHANNEL, CC_NUMBER_CV_B, 127 - CC_Value);
+      sendOSCDensity(CC_Value);
     }
     if (CC_Value >= _triggerValue && _sendNOTE == false)
     {
@@ -639,18 +640,34 @@ void sendOSCTrigger(int triggerNumber)  {
  
   OscMessage myMessage = new OscMessage("/trigger");
  
-  myMessage.add(triggerNumber); 
-  
-  _oscP5.send(myMessage, _myRemoteLocation);
-  
+  myMessage.add(triggerNumber);  
+  _oscP5.send(myMessage, _myRemoteLocation);  
+}
+
+void sendOSCDensity(int density) {
+
+  OscMessage myMessage = new OscMessage("/density");
+ 
+  myMessage.add(density);  
+  _oscP5.send(myMessage, _myRemoteLocation);  
 }
 
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {
   /* print the address pattern and the typetag of the received OscMessage */
-  print("### received an osc message.");
+  print("[INFO] received an osc message.");
   print(" addrpattern: "+theOscMessage.addrPattern());
   println(" typetag: "+theOscMessage.typetag());
+  if (theOscMessage.checkAddrPattern("/show") == true) {
+    if (theOscMessage.typetag().equals("F") == true) {
+      // H -> hide control panel
+      surface.setSize(640, 480);
+    } else  {
+      // S -> show control panel
+      surface.setSize(1240, 490);
+   }
+  }
+  
 }
 
 // ==================================================
