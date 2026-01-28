@@ -107,6 +107,7 @@ boolean _sendNOTE = false;
 // OSC
 OscP5 _oscP5;
 NetAddress _myRemoteLocation;
+boolean _useOSC = false;
 
 
 // Filter
@@ -210,8 +211,13 @@ void buildMMI()
  .setPosition(640 + 290,50)
  .setSize(10,10); 
  
- _controlP5.addButton("shooting")
+  _controlP5.addToggle("network")
+ .setValue(false)
  .setPosition(640 + 320,50)
+ .setSize(10,10); 
+ 
+ _controlP5.addButton("shooting")
+ .setPosition(640 + 370,50)
  .setSize(50,20); 
  
   _controlP5.addSlider("bbox max width")
@@ -494,6 +500,19 @@ void controlEvent(ControlEvent theEvent)
       println("[info] FX is disabled");
     }
   }
+  if (theEvent.getController().getName()=="network") 
+  {
+    if (theEvent.getController().getValue() == 1.0)
+    {
+      _useOSC = true;
+      println("[info] Network is enabled");
+    }
+    else
+    {
+      _useOSC = false;
+      println("[info] Network is disabled");
+    }
+  }
   if (theEvent.getController().getName()=="shooting") 
   {
     String s = String.valueOf(year())
@@ -638,36 +657,42 @@ void controllerChange(int channel, int number, int value) {
 // ==================================================
 void sendOSCTrigger(int triggerNumber)  {
  
-  OscMessage myMessage = new OscMessage("/trigger");
+  if (_useOSC == true) {
+    OscMessage myMessage = new OscMessage("/trigger");
  
-  myMessage.add(triggerNumber);  
-  _oscP5.send(myMessage, _myRemoteLocation);  
+    myMessage.add(triggerNumber);  
+    _oscP5.send(myMessage, _myRemoteLocation); 
+  }
 }
 
 void sendOSCDensity(int density) {
 
-  OscMessage myMessage = new OscMessage("/density");
+  if (_useOSC == true) {
+    OscMessage myMessage = new OscMessage("/density");
  
-  myMessage.add(density);  
-  _oscP5.send(myMessage, _myRemoteLocation);  
+    myMessage.add(density);  
+   _oscP5.send(myMessage, _myRemoteLocation);
+  }
 }
 
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {
-  /* print the address pattern and the typetag of the received OscMessage */
-  print("[INFO] received an osc message.");
-  print(" addrpattern: "+theOscMessage.addrPattern());
-  println(" typetag: "+theOscMessage.typetag());
-  if (theOscMessage.checkAddrPattern("/show") == true) {
-    if (theOscMessage.typetag().equals("F") == true) {
-      // H -> hide control panel
-      surface.setSize(640, 480);
-    } else  {
-      // S -> show control panel
-      surface.setSize(1240, 490);
-   }
+  if (_useOSC == true) {
+    /* print the address pattern and the typetag of the received OscMessage */
+    print("[INFO] received an osc message.");
+    print(" addrpattern: "+theOscMessage.addrPattern());
+    println(" typetag: "+theOscMessage.typetag());
+ 
+    if (theOscMessage.checkAddrPattern("/show") == true) {
+      if (theOscMessage.typetag().equals("F") == true) {
+        // H -> hide control panel
+        surface.setSize(640, 480);
+      } else  {
+        // S -> show control panel
+        surface.setSize(1240, 490);
+     }
+    }
   }
-  
 }
 
 // ==================================================
