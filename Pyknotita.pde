@@ -515,20 +515,7 @@ void controlEvent(ControlEvent theEvent)
   }
   if (theEvent.getController().getName()=="shooting") 
   {
-    String s = String.valueOf(year())
-    +"_"
-    +String.valueOf(month())
-    +"_"
-    +String.valueOf(day())
-    +"_"
-    +String.valueOf(hour())
-    +"_"
-    +String.valueOf(minute())
-    +"_"
-    +String.valueOf(second())  
-    +".tif";
-    saveFrame("shooting/" + s);
-    println("[info] shooting " + s + " done");
+    shooting();
   }
   
   if (theEvent.getController().getName()=="bbox max width") 
@@ -556,6 +543,25 @@ void controlEvent(ControlEvent theEvent)
     _triggerValue = theEvent.getController().getValue();
   }
  }
+}
+
+//===================================================
+// 
+void shooting() {
+    String s = String.valueOf(year())
+    +"_"
+    +String.valueOf(month())
+    +"_"
+    +String.valueOf(day())
+    +"_"
+    +String.valueOf(hour())
+    +"_"
+    +String.valueOf(minute())
+    +"_"
+    +String.valueOf(second())  
+    +".tif";
+    saveFrame("shooting/" + s);
+    println("[info] shooting " + s + " done");
 }
 
 //===================================================
@@ -683,6 +689,7 @@ void oscEvent(OscMessage theOscMessage) {
     print(" addrpattern: "+theOscMessage.addrPattern());
     println(" typetag: "+theOscMessage.typetag());
  
+    // show / hide control panel
     if (theOscMessage.checkAddrPattern("/show") == true) {
       if (theOscMessage.typetag().equals("F") == true) {
         // H -> hide control panel
@@ -690,7 +697,14 @@ void oscEvent(OscMessage theOscMessage) {
       } else  {
         // S -> show control panel
         surface.setSize(1240, 490);
-     }
+      }
+    }
+     
+    // shooting
+    if (theOscMessage.checkAddrPattern("/shooting") == true) {
+      if (theOscMessage.typetag().equals("T") == true) {
+        shooting();
+      }
     }
   }
 }
