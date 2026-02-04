@@ -515,7 +515,7 @@ void controlEvent(ControlEvent theEvent)
   }
   if (theEvent.getController().getName()=="shooting") 
   {
-    shooting();
+    shoot();
   }
   
   if (theEvent.getController().getName()=="bbox max width") 
@@ -547,7 +547,7 @@ void controlEvent(ControlEvent theEvent)
 
 //===================================================
 // 
-void shooting() {
+void shoot() {
     String s = String.valueOf(year())
     +"_"
     +String.valueOf(month())
@@ -703,7 +703,7 @@ void oscEvent(OscMessage theOscMessage) {
     // shooting
     if (theOscMessage.checkAddrPattern("/shooting") == true) {
       if (theOscMessage.typetag().equals("T") == true) {
-        shooting();
+        shoot();
       }
     }
   }
